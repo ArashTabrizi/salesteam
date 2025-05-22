@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Payment Advisor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .step-card {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .hidden-step {
+            opacity: 0;
+            transform: translateY(20px);
+            display: none !important; /* Use !important to ensure it's hidden initially */
+        }
+        .visible-step {
+            opacity: 1;
+            transform: translateY(0);
+            display: block !important;
+        }
+        /* Custom scrollbar for better aesthetics if needed */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1em;
+            padding-right: 2.5rem; /* Ensure space for arrow */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
+
+    <div class="w-full max-w-2xl bg-slate-800 shadow-2xl rounded-xl p-6 md:p-10">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-sky-400">Sales Payment Advisor</h1>
+            <p class="text-slate-400 mt-2">Guide customers to the best payment options for our company.</p>
+        </header>
+
+        <div id="appContainer">
+            <div id="step1" class="step-card visible-step">
+                <h2 class="text-2xl font-semibold mb-6 text-slate-200">Step 1: How will the customer pay?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="selectPaymentType('full')" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out text-lg">
+                        Full Payment
+                    </button>
+                    <button onclick="selectPaymentType('installment')" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out text-lg">
+                        Installment Plan
+                    </button>
+                </div>
+            </div>
+
+            <div id="step2a" class="step-card hidden-step">
+                <h2 class="text-2xl font-semibold mb-6 text-slate-200">Step 2: Full Payment - Select Card Type</h2>
+                <select id="fullPaymentCardType" class="w-full bg-slate-700 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-lg mb-6">
+                    <option value="">-- Select Card --</option>
+                    <option value="DEBIT">Debit Card (Any Bank)</option>
+                    <option value="VISA_MC_LOCAL">VISA / Mastercard (Local)</option>
+                    <option value="VISA_MC_INTL">VISA / Mastercard (International)</option>
+                    <option value="AMEX">AMEX Card</option>
+                    <option value="JCB_UPI">JCB / UnionPay (UPI)</option>
+                    <option value="FOREIGN_OTHER">Other Foreign Card</option>
+                </select>
+                <div class="flex justify-between">
+                    <button onclick="goBack('step1', 'step2a')" class="bg-slate-600 hover:bg-slate-700 text-slate-200 font-medium py-3 px-6 rounded-lg transition duration-300">Back</button>
+                    <button onclick="calculateFullPaymentSuggestion()" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">Get Suggestion</button>
+                </div>
+            </div>
+
+            <div id="step2b" class="step-card hidden-step">
+                <h2 class="text-2xl font-semibold mb-6 text-slate-200">Step 2: Installment Plan - Details</h2>
+                <div class="space-y-6 mb-6">
+                    <div>
+                        <label for="installmentCardType" class="block text-sm font-medium text-slate-300 mb-1">Credit Card Type:</label>
+                        <select id="installmentCardType" class="w-full bg-slate-700 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-lg">
+                            <option value="">-- Select Card --</option>
+                            <option value="VISA_MC_LOCAL">VISA / Mastercard (Local)</option>
+                            <option value="VISA_MC_INTL">VISA / Mastercard (International)</option>
+                            <option value="AMEX">AMEX Card</option>
+                            <option value="JCB_UPI">JCB / UnionPay (UPI)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="installmentTenure" class="block text-sm font-medium text-slate-300 mb-1">Installment Tenure:</label>
+                        <select id="installmentTenure" class="w-full bg-slate-700 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-lg">
+                            <option value="">-- Select Tenure --</option>
+                            <option value="6m">6 Months</option>
+                            <option value="12m">12 Months</option>
+                            <option value="18m">18 Months</option>
+                            <option value="24m">24 Months</option>
+                        </select>
+                    </div>
+                </div>
+                 <div class="flex justify-between">
+                    <button onclick="goBack('step1', 'step2b')" class="bg-slate-600 hover:bg-slate-700 text-slate-200 font-medium py-3 px-6 rounded-lg transition duration-300">Back</button>
+                    <button onclick="calculateInstallmentSuggestion()" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">Get Suggestion</button>
+                </div>
+            </div>
+
+            <div id="result" class="step-card hidden-step mt-8 p-6 bg-slate-700 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold mb-4 text-sky-400">Recommendation:</h3>
+                <div id="suggestionText" class="text-slate-200 text-lg space-y-2">
+                    </div>
+                <div id="costInfo" class="text-slate-200 mt-3 text-base"> </div>
+                <button onclick="resetApp()" class="mt-8 w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">Start Over</button>
+            </div>
+        </div>
+        <footer class="mt-10 text-center text-sm text-slate-500">
+            <p>&copy; <span id="currentYear"></span> Your Company Name. For internal use only.</p>
+            <p class="mt-1">This tool helps suggest cost-effective payment processing. Always prioritize customer convenience and their final choice.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Data Store for Rates ---
+        // MDRs (Merchant Discount Rates) as decimals (e.g., 0.8% = 0.008)
+        const mdrs = {
+            "DEBIT": { "AmBank": 0.004, "Maybank": 0.0045, "PublicBank": 0.008 },
+            "VISA_MC_LOCAL": { "AmBank": 0.008, "Maybank": 0.01, "PublicBank": 0.008 },
+            "VISA_MC_INTL": { "AmBank": 0.018, "Maybank": 0.025, "PublicBank": null }, // Assuming PublicBank doesn't support Intl Visa/MC
+            "AMEX": { "AmBank": null, "Maybank": 0.015, "PublicBank": null }, // Assuming only Maybank supports AMEX
+            "JCB_UPI": { 
+                "AmBank_Issued": { "AmBank": 0.008 }, 
+                "AmBank_NonIssued": { "AmBank": 0.015 }, 
+                "Maybank": { "Maybank": 0.016 },
+                "PublicBank": null // Assuming Public Bank does not support JCB/UPI
+            },
+            "FOREIGN_OTHER": { 
+                "AmBank_Special": { "AmBank": 0.013 }, 
+                "Maybank_General": { "Maybank": 0.025 } 
+            }
+        };
+
+        // Installment Interest Rates (borne by merchant) as decimals
+        const installmentRates = {
+            "AmBank": { "6m": 0.02, "12m": 0.03, "18m": 0.04, "24m": 0.05 },
+            "Maybank": { "6m": 0.03, "12m": 0.04, "18m": 0.045, "24m": 0.055 },
+            "PublicBank": { "6m": 0.03, "12m": 0.04, "18m": 0.05, "24m": 0.06 } // Assuming 24m is 6% for Public Bank
+        };
+
+        // --- UI Navigation ---
+        let currentStep = 'step1';
+        const steps = ['step1', 'step2a', 'step2b', 'result'];
+
+        function showStep(stepId) {
+            steps.forEach(id => {
+                const el = document.getElementById(id);
+                if (id === stepId) {
+                    setTimeout(() => {
+                        el.classList.remove('hidden-step');
+                        el.classList.add('visible-step');
+                    }, 0);
+                } else {
+                    el.classList.remove('visible-step');
+                    el.classList.add('hidden-step');
+                }
+            });
+            currentStep = stepId;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function selectPaymentType(type) {
+            if (type === 'full') {
+                showStep('step2a');
+            } else if (type === 'installment') {
+                showStep('step2b');
+            }
+        }
+
+        function goBack(targetStep, currentVisibleStep) {
+            const currentEl = document.getElementById(currentVisibleStep);
+            if (currentEl) {
+                currentEl.classList.remove('visible-step');
+                currentEl.classList.add('hidden-step');
+            }
+            showStep(targetStep);
+        }
+        
+        function resetApp() {
+            document.getElementById('fullPaymentCardType').value = '';
+            document.getElementById('installmentCardType').value = '';
+            document.getElementById('installmentTenure').value = '';
+            document.getElementById('suggestionText').innerHTML = '';
+            document.getElementById('costInfo').innerHTML = '';
+            showStep('step1');
+        }
+
+        // --- Logic Functions ---
+        function calculateFullPaymentSuggestion() {
+            const cardType = document.getElementById('fullPaymentCardType').value;
+            if (!cardType) {
+                alert('Please select a card type.');
+                return;
+            }
+
+            let suggestion = "No recommendation available for this card type.";
+            let costText = "";
+            let bestRate = Infinity;
+            let bestTerminal = "";
+
+            switch (cardType) {
+                case "DEBIT":
+                    if (mdrs.DEBIT.AmBank <= mdrs.DEBIT.Maybank && mdrs.DEBIT.AmBank <= mdrs.DEBIT.PublicBank) {
+                        bestTerminal = "AmBank"; bestRate = mdrs.DEBIT.AmBank;
+                    } else if (mdrs.DEBIT.Maybank <= mdrs.DEBIT.AmBank && mdrs.DEBIT.Maybank <= mdrs.DEBIT.PublicBank) {
+                        bestTerminal = "Maybank"; bestRate = mdrs.DEBIT.Maybank;
+                    } else {
+                        bestTerminal = "PublicBank"; bestRate = mdrs.DEBIT.PublicBank;
+                    }
+                    suggestion = `For <strong>Debit Cards</strong>, suggest using the <strong>${bestTerminal} Terminal</strong>.`;
+                    costText = `(Our Cost: ${(bestRate * 100).toFixed(2)}%)`;
+                    break;
+                case "VISA_MC_LOCAL":
+                    if (mdrs.VISA_MC_LOCAL.AmBank <= mdrs.VISA_MC_LOCAL.Maybank) { // AmBank and Public Bank are 0.008
+                        bestTerminal = "AmBank or Public Bank"; 
+                        bestRate = mdrs.VISA_MC_LOCAL.AmBank;
+                    } else { // Should not happen with current rates as Maybank is 0.01
+                        bestTerminal = "Maybank";
+                        bestRate = mdrs.VISA_MC_LOCAL.Maybank;
+                    }
+                    suggestion = `For <strong>Local VISA/Mastercard</strong>, suggest using the <strong>${bestTerminal} Terminal</strong>.`;
+                    costText = `(Our Cost: ${(bestRate * 100).toFixed(2)}%)`;
+                    break;
+                case "VISA_MC_INTL":
+                    // Check AmBank first, then Maybank, as PublicBank is null
+                    if (mdrs.VISA_MC_INTL.AmBank && (!mdrs.VISA_MC_INTL.Maybank || mdrs.VISA_MC_INTL.AmBank <= mdrs.VISA_MC_INTL.Maybank)) {
+                        bestTerminal = "AmBank"; bestRate = mdrs.VISA_MC_INTL.AmBank;
+                    } else if (mdrs.VISA_MC_INTL.Maybank) {
+                        bestTerminal = "Maybank"; bestRate = mdrs.VISA_MC_INTL.Maybank;
+                    } else {
+                        bestTerminal = "N/A"; bestRate = Infinity; // Should not happen if at least one is available
+                    }
+                    suggestion = `For <strong>International VISA/Mastercard</strong>, suggest using the <strong>${bestTerminal} Terminal</strong>.`;
+                    costText = bestRate !== Infinity ? `(Our Cost: ${(bestRate * 100).toFixed(2)}%)` : "(No suitable terminal found)";
+                    break;
+                case "AMEX":
+                    if (mdrs.AMEX.Maybank) { 
+                        bestTerminal = "Maybank"; bestRate = mdrs.AMEX.Maybank;
+                        suggestion = `For <strong>AMEX Cards</strong>, suggest using the <strong>${bestTerminal} Terminal</strong>.`;
+                        costText = `(Our Cost: ${(bestRate * 100).toFixed(2)}%)`;
+                    } else {
+                        suggestion = `For <strong>AMEX Cards</strong>, we currently do not have a supporting terminal.`;
+                        costText = "";
+                    }
+                    break;
+                case "JCB_UPI":
+                    let amBankJCBUPIRate = mdrs.JCB_UPI.AmBank_NonIssued.AmBank; // Using NonIssued as default for AmBank Terminal
+                    let mayBankJCBUPIRate = mdrs.JCB_UPI.Maybank.Maybank;
+                    let amBankIssuedJCBUPIRate = mdrs.JCB_UPI.AmBank_Issued.AmBank;
+
+                    let optionsJCB = [];
+                    if(amBankJCBUPIRate !== null) optionsJCB.push({terminal: "AmBank (General JCB/UPI)", rate: amBankJCBUPIRate});
+                    if(amBankIssuedJCBUPIRate !== null) optionsJCB.push({terminal: "AmBank (if AmBank-issued JCB/UPI)", rate: amBankIssuedJCBUPIRate});
+                    if(mayBankJCBUPIRate !== null) optionsJCB.push({terminal: "Maybank", rate: mayBankJCBUPIRate});
+                    
+                    optionsJCB.sort((a,b) => a.rate - b.rate);
+
+                    if(optionsJCB.length > 0){
+                        bestTerminal = optionsJCB[0].terminal;
+                        bestRate = optionsJCB[0].rate;
+                        suggestion = `For <strong>JCB/UnionPay (UPI)</strong>, the best option is <strong>${bestTerminal} Terminal</strong>.`;
+                        costText = `(Our Cost: ${(bestRate * 100).toFixed(2)}%). `;
+                        if (optionsJCB.length > 1) {
+                            costText += `<br/>Other options: `;
+                            optionsJCB.slice(1).forEach(opt => {
+                                costText += `${opt.terminal} (${(opt.rate * 100).toFixed(2)}%); `;
+                            });
+                        }
+                    } else {
+                        suggestion = `For <strong>JCB/UnionPay (UPI)</strong>, no suitable terminal found.`;
+                        costText = "";
+                    }
+                    break;
+                case "FOREIGN_OTHER":
+                    let amBankSpecialRate = mdrs.FOREIGN_OTHER.AmBank_Special.AmBank;
+                    let mayBankGeneralRate = mdrs.FOREIGN_OTHER.Maybank_General.Maybank;
+
+                    if (amBankSpecialRate <= mayBankGeneralRate) {
+                        bestTerminal = "AmBank (Special Foreign Rate)"; bestRate = amBankSpecialRate;
+                    } else {
+                        bestTerminal = "Maybank (General Foreign Rate)"; bestRate = mayBankGeneralRate;
+                    }
+                    suggestion = `For <strong>Other Foreign Cards</strong>, suggest the <strong>${bestTerminal} Terminal</strong>.`;
+                    costText = `(Our Cost with ${bestTerminal.split('(')[0].trim()}: ${(bestRate * 100).toFixed(2)}%). AmBank special rate: ${(amBankSpecialRate*100).toFixed(2)}%, Maybank general rate: ${(mayBankGeneralRate*100).toFixed(2)}%.`;
+                    break;
+            }
+
+            document.getElementById('suggestionText').innerHTML = suggestion;
+            document.getElementById('costInfo').innerHTML = costText;
+            showStep('result');
+        }
+
+        function calculateInstallmentSuggestion() {
+            const cardType = document.getElementById('installmentCardType').value;
+            const tenure = document.getElementById('installmentTenure').value;
+
+            if (!cardType || !tenure) {
+                alert('Please select both card type and tenure.');
+                return;
+            }
+
+            let introSuggestion = `For a <strong>${cardType.replace('_', ' / ')}</strong> on a <strong>${tenure}</strong> installment plan, here are our preferred terminal options (best for company first):`;
+            let rankedListHTML = "<ol class='list-decimal list-inside space-y-2 mt-2'>";
+            
+            const banks = ["AmBank", "Maybank", "PublicBank"];
+            let possibleOptions = [];
+
+            banks.forEach(bank => {
+                let currentMDR = null;
+
+                if (cardType === "VISA_MC_LOCAL") currentMDR = mdrs.VISA_MC_LOCAL[bank];
+                else if (cardType === "VISA_MC_INTL") currentMDR = mdrs.VISA_MC_INTL[bank];
+                else if (cardType === "AMEX") currentMDR = mdrs.AMEX[bank];
+                else if (cardType === "JCB_UPI") {
+                    // Simplified: Use AmBank_NonIssued for AmBank terminal for JCB/UPI installments
+                    if (bank === "AmBank") currentMDR = mdrs.JCB_UPI.AmBank_NonIssued.AmBank; 
+                    else if (bank === "Maybank") currentMDR = mdrs.JCB_UPI.Maybank.Maybank;
+                    // PublicBank is null for JCB_UPI
+                }
+                
+                if (currentMDR !== null && installmentRates[bank] && installmentRates[bank][tenure] !== undefined) {
+                    const currentInstallmentRate = installmentRates[bank][tenure];
+                    const totalCost = currentMDR + currentInstallmentRate;
+                    possibleOptions.push({ 
+                        bank: bank, 
+                        totalCost: totalCost, 
+                        mdr: currentMDR, 
+                        instRate: currentInstallmentRate 
+                    });
+                }
+            });
+            
+            if (possibleOptions.length > 0) {
+                possibleOptions.sort((a, b) => a.totalCost - b.totalCost); // Sort by lowest total cost
+
+                possibleOptions.forEach(opt => {
+                    rankedListHTML += `<li><strong>${opt.bank} Terminal</strong> 
+                                        (Our Total Cost: <strong>${(opt.totalCost * 100).toFixed(2)}%</strong>)
+                                        <br/><span class='text-xs text-slate-500'>MDR: ${(opt.mdr * 100).toFixed(2)}% + Installment: ${(opt.instRate * 100).toFixed(2)}%</span>
+                                      </li>`;
+                });
+                rankedListHTML += "</ol>";
+            } else {
+                introSuggestion = `Sorry, no suitable installment option found for <strong>${cardType.replace('_', ' / ')}</strong> with <strong>${tenure}</strong> tenure via our available terminals.`;
+                rankedListHTML = "<p class='mt-2'>Please check card compatibility or suggest full payment.</p>";
+            }
+
+            document.getElementById('suggestionText').innerHTML = introSuggestion;
+            document.getElementById('costInfo').innerHTML = rankedListHTML;
+            showStep('result');
+        }
+        
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        showStep('step1');
+
+    </script>
+</body>
+</html>
