@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kidocode Blog Recommender V2</title>
+    <style>
+        /* Basic Reset & Font */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa; /* Lighter gray background */
+            color: #212529; /* Darker text */
+            display: flex;
+            justify-content: center;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Main Container */
+        #recommender-app {
+            max-width: 52rem; /* Slightly wider */
+            width: 95%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* Slightly more rounded */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.075);
+            border: 1px solid #dee2e6;
+        }
+
+        /* Title */
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: #343a40;
+        }
+
+        /* Controls section */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-start; /* Align to top for potentially different heights */
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex-grow: 1;
+        }
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* Select element styling */
+        select {
+            width: 100%; /* Take full width of group */
+            min-width: 15rem; /* Minimum width */
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            background-color: #ffffff;
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            padding-right: 2.5rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        select:focus {
+             border-color: #86b7fe;
+             outline: 0;
+             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        select:disabled {
+            background-color: #e9ecef;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Results Card styling */
+        .results-card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-top: 1rem; /* Add some space above results */
+        }
+        .results-card.hidden {
+            display: none;
+        }
+        .results-card-content {
+            padding: 1.25rem;
+        }
+
+        /* Card Title */
+        .results-card h2 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            margin-top: 0;
+            color: #495057;
+        }
+
+        /* Results List */
+        .results-card ul {
+            list-style-type: none; /* Remove bullets */
+            padding-left: 0;
+            margin: 0;
+        }
+        .results-card ul li {
+            margin-bottom: 0.75rem; /* Increased spacing */
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+         .results-card ul li:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        /* Links */
+        a {
+            color: #0d6efd; /* Bootstrap blue */
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0a58ca;
+        }
+        .results-card ul li span { /* Style for tag display */
+            display: block;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* Footer */
+        footer {
+            font-size: 0.8rem;
+            color: #6c757d;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+         footer code {
+            background-color: #e9ecef;
+            padding: 0.1em 0.3em;
+            border-radius: 0.2em;
+            font-size: 0.9em;
+         }
+    </style>
+</head>
+<body>
+
+    <div id="recommender-app">
+        <h1>Kidocode Blog Recommender</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="category-selector">1. Select Concern Category:</label>
+                <select id="category-selector">
+                    <option value="">-- Select Category --</option>
+                    <option value="ALL_CATEGORIES">-- Show All Blogs --</option>
+                    </select>
+            </div>
+            <div class="control-group">
+                 <label for="question-selector">2. Select Specific Question:</label>
+                <select id="question-selector" disabled>
+                    <option value="">-- Select Question --</option>
+                    </select>
+            </div>
+        </div>
+
+        <div id="results-section" class="results-card hidden">
+            <div class="results-card-content">
+                <h2 id="results-title">Recommended Blog Article(s)</h2>
+                <ul id="blogs-list">
+                    </ul>
+            </div>
+        </div>
+
+        <footer>
+            Blog post mapping based on titles/summaries. Last updated: April 2025.
+        </footer>
+    </div>
+
+    <script>
+        /**************************** DATA STRUCTURES ****************************/
+
+        // --- Categories and Questions ---
+        const CATEGORIES = {
+            "A": {
+                name: "Age & Readiness",
+                questions: [
+                    { id: "A1", text: "Isn't five years old too young to start coding?" },
+                    { id: "A2", text: "Can my teen begin even if they’ve never coded before?" },
+                    { id: "A3", text: "What if my child is already coding—will Kidocode still add value?" }
+                ]
+            },
+            "B": {
+                name: "Coding in the Era of AI",
+                questions: [
+                    { id: "B1", text: "If AI now writes code, why bother teaching kids to program?" },
+                    { id: "B2", text: "Will learning to prompt AI (e.g., ChatGPT) be part of the lessons?" },
+                    { id: "B3", text: "How does Kidocode teach ethics and safety around AI?" }
+                ]
+            },
+            "C": {
+                name: "Learning Outcomes & Skills",
+                questions: [
+                    { id: "C1", text: "How does coding improve problem-solving or executive-function skills?" },
+                    { id: "C2", text: "Does coding boost creativity or just logic?" },
+                    { id: "C3", text: "Can coding strengthen my child’s math abilities?" }
+                ]
+            },
+            "D": {
+                name: "Screen-Time & Well-Being",
+                questions: [
+                    { id: "D1", text: "How much screen time is healthy for 5- to 12-year-olds?" },
+                    { id: "D2", text: "What safeguards are in place to balance online and offline activities?" }
+                ]
+            },
+            "E": {
+                name: "Course Experience & Logistics",
+                questions: [
+                    { id: "E1", text: "How are lessons personalised to each child’s pace and interests?" },
+                    { id: "E2", text: "Is the trial class really free, and how long does it last?" }, // No direct blog found
+                    { id: "E3", text: "What do your bundles cost, and what do they include?" }, // No direct blog found
+                    { id: "E4", text: "Can my child learn both online and on-campus?" },
+                    { id: "E5", text: "How flexible is the scheduling (weekends, public holidays)?" } // No direct blog found
+                ]
+            },
+            "F": {
+                name: "Curriculum & Hands-On Projects",
+                questions: [
+                    { id: "F1", text: "Will my child build real apps, games, or electronic gadgets?" },
+                    { id: "F2", text: "Do you teach robotics, AI, business, and other special tracks?" },
+                    { id: "F3", text: "How do degrees and learning paths differ from short courses?" } // No direct blog found
+                ]
+            },
+            "G": {
+                name: "Future Careers & Entrepreneurship",
+                questions: [
+                    { id: "G1", text: "How does coding prepare kids for future jobs that don’t exist yet?" },
+                    { id: "G2", text: "Will Kidocode nurture my child’s entrepreneurial skills?" }
+                ]
+            },
+            "H": {
+                name: "Inclusivity & Special Needs",
+                questions: [
+                    { id: "H1", text: "Are classes suitable for children with learning differences or special needs?" },
+                    { id: "H2", text: "How do instructors adapt content for different learning styles?" }
+                ]
+            }
+        };
+
+        // --- Blog Posts (URLs as provided by user) ---
+        const BLOGS = [
+          { title: "Coding and Problem-Solving Skills in Kids", url: "https://www.kidocode.com/blog/how-coding-helps-build-problem-solving-skills-in-kids" },
+          { title: "Is a Digital Marketing Course Useful for Kids?", url: "https://www.kidocode.com/blog/is-a-digital-marketing-course-useful-for-your-kid" },
+          { title: "Reasons to Learn Coding with AI for Kids", url: "https://www.kidocode.com/blog/6-reasons-every-kid-should-learn-coding-with-ai-tools" },
+          { title: "How AI is Shaping Data Analysis", url: "https://www.kidocode.com/blog/data-science-demystified-how-ai-is-shaping-data-analysis" },
+          { title: "The Future of Creativity", url: "https://www.kidocode.com/blog/future-of-creativity-ai-and-human-enhancement" },
+          { title: "AI in Everyday Life", url: "https://www.kidocode.com/blog/ai-in-everyday-life-practical-applications-of-large-language-models" },
+          { title: "Launching AI-Based Businesses", url: "https://www.kidocode.com/blog/entrepreneurship-in-the-age-of-ai-launching-ai-based-businesses" },
+          { title: "Ethics and Safety in AI", url: "https://www.kidocode.com/blog/ethics-in-ai-navigating-safety-misinformation-and-responsible-use" },
+          { title: "Interactive Digital Storybooks with AI", url: "https://www.kidocode.com/blog/storyboarding-the-future-creating-interactive-digital-storybooks-with-ai" },
+          { title: "Generative Art ", url: "https://www.kidocode.com/blog/art-meets-ai-the-rise-of-generative-art-and-digital-galleries" },
+          { title: "Essential Skills in Prompt Engineering", url: "https://www.kidocode.com/blog/mastering-chatgpt-essential-skills-in-prompt-engineering" },
+          { title: "Understanding AI Transformer Models", url: "https://www.kidocode.com/blog/transformative-learning-understanding-transformer-models-in-ai" },
+          { title: "5 Benefits of Learning Blockchain for Kids", url: "https://www.kidocode.com/blog/5-benefits-of-learning-blockchain-for-kids" },
+          { title: "Why Kids Should Learn Mobile App Dev", url: "https://www.kidocode.com/blog/mobile-app-development-course-why-kids-should-learn" },
+          { title: "5 Best Blockchain Books for Kids", url: "https://www.kidocode.com/blog/5-best-blockchain-books-for-kids" },
+          { title: "Data Science for Kids in Malaysia", url: "https://www.kidocode.com/blog/data-science-for-kids-in-malaysia-why-early-exposure-matters" },
+          { title: "Why Data Science is Important for Kids", url: "https://www.kidocode.com/blog/why-data-science-is-important-for-kids" },
+          { title: "How to Teach App Development for Kids", url: "https://www.kidocode.com/blog/how-to-teach-app-development-for-kids" },
+          { title: "Teaching Electronics to Children", url: "https://www.kidocode.com/blog/teaching-kids-basic-electronics-literacy" },
+          { title: "Benefits of Learning Website Design", url: "https://www.kidocode.com/blog/website-design-for-kids-5-benefits-of-learning-website-design" },
+          { title: "How to Teach your Kids to Learn Blockchain", url: "https://www.kidocode.com/blog/how-to-teach-your-kids-to-learn-blockchain" },
+          { title: "5 Reasons Kids Should Learn 3D Modelling", url: "https://www.kidocode.com/blog/5-reasons-kids-should-learn-3d-modelling" },
+          { title: "Can Kids Learn From Roblox?", url: "https://www.kidocode.com/blog/gamified-learning-can-our-kids-learn-from-roblox" },
+          { title: "Minecraft Coding to Turns Kids to Creators", url: "https://www.kidocode.com/blog/how-minecraft-coding-turns-kids-become-creator" },
+          { title: "Top 5 Benefits of AI and Robotics for Kids", url: "https://www.kidocode.com/blog/5-benefits-of-ai-and-robotics-for-kids" },
+          { title: "How to Code Your Own Game with JavaScript", url: "https://www.kidocode.com/blog/how-to-code-your-own-game-with-javascript" },
+          { title: "5 Reasons For Kids to Learn Entrepreneurship", url: "https://www.kidocode.com/blog/5-reasons-why-your-kids-should-learn-entrepreneurship" },
+          { title: "How To Grow Child's Entrepreneurial Spirit", url: "https://www.kidocode.com/blog/how-to-grow-your-childs-entrepreneurial-spirit" },
+          { title: "5 Easiest Coding Languages for Kids", url: "https://www.kidocode.com/blog/5-easiest-coding-languages-for-kids" },
+          { title: "Guide for Kids Robotics in 2022", url: "https://www.kidocode.com/blog/guide-for-kids-to-start-learning-robotics-2022" },
+          { title: "Criteria When Picking Coding Classes", url: "https://www.kidocode.com/blog/5-important-criteria-when-picking-coding-classes" },
+          { title: "Top 10 Kids CS Classes", url: "https://www.kidocode.com/blog/top-10-computer-science-classes-for-kids" },
+          { title: "Smart Houses", url: "https://www.kidocode.com/blog/smart-houses" },
+          { title: "Digital Circuits", url: "https://www.kidocode.com/blog/digital-circuits" },
+          { title: "Principle of Electronics", url: "https://www.kidocode.com/blog/principle-of-electronics" },
+          { title: "Robots and Drones", url: "https://www.kidocode.com/blog/robots-and-drones" },
+          { title: "Backend Development", url: "https://www.kidocode.com/blog/backend-development" },
+          { title: "Web Security", url: "https://www.kidocode.com/blog/security" },
+          { title: "JavaScript and jQuery", url: "https://www.kidocode.com/blog/javascript-and-jquery" },
+          { title: "Android Development", url: "https://www.kidocode.com/blog/android-development" },
+          { title: "Artificial Intelligence", url: "https://www.kidocode.com/blog/artificial-intelligence" },
+          { title: "iOS Development", url: "https://www.kidocode.com/blog/ios-development" },
+          { title: "PhaserJS", url: "https://www.kidocode.com/blog/phaserjs" },
+          { title: "Computer Graphics", url: "https://www.kidocode.com/blog/computer-graphics" },
+          { title: "Electronic Components", url: "https://www.kidocode.com/blog/electronic-components" },
+          { title: "PyGame", url: "https://www.kidocode.com/blog/pygame" },
+          { title: "Cloud Services", url: "https://www.kidocode.com/blog/cloud-services" },
+          { title: "C and C++", url: "https://www.kidocode.com/blog/c-cplusplus" },
+          { title: "Web Hosting", url: "https://www.kidocode.com/blog/web-hosting" },
+          { title: "HTML", url: "https://www.kidocode.com/blog/html" },
+          { title: "Mobile Programming", url: "https://www.kidocode.com/blog/mobile-programming" },
+          { title: "CSS", url: "https://www.kidocode.com/blog/css" },
+          { title: "JavaScript", url: "https://www.kidocode.com/blog/javascript" },
+          { title: "User Interface Design", url: "https://www.kidocode.com/blog/ui-design" },
+          { title: "Mathematics", url: "https://www.kidocode.com/blog/mathematics" },
+          { title: "Mobile Hardware", url: "https://www.kidocode.com/blog/mobile-hardware" },
+          { title: "Information Revolution", url: "https://www.kidocode.com/blog/social-revolution" },
+          { title: "Scratch vs Python", url: "https://www.kidocode.com/blog/scratch-vs-python" },
+          { title: "Special Kids", url: "https://www.kidocode.com/blog/special-kids" },
+          { title: "What is Python?", url: "https://www.kidocode.com/blog/python" },
+          { title: "Personalized Learning", url: "https://www.kidocode.com/blog/personal-learning-system" },
+          { title: "MIT App Inventor", url: "https://www.kidocode.com/blog/mit-app-inventor" },
+          { title: "Micro bit", url: "https://www.kidocode.com/blog/micro-bit" },
+          { title: "Knowledge Workers", url: "https://www.kidocode.com/blog/knowledge-vs-labour-worker" },
+          { title: "Knowledge Economy", url: "https://www.kidocode.com/blog/knowledge-economy" },
+          { title: "Home Access", url: "https://www.kidocode.com/blog/home-access" },
+          { title: "Game Addiction", url: "https://www.kidocode.com/blog/game-addiction" },
+          { title: "Freelancer Economy", url: "https://www.kidocode.com/blog/freelancer-economy" },
+          { title: "Estonia's Education", url: "https://www.kidocode.com/blog/estonia" },
+          { title: "Entrepreneurship Skills", url: "https://www.kidocode.com/blog/5-reasons-why-your-kids-should-learn-entrepreneurship" }, // Note: URL maps to '5 Reasons...' post
+          { title: "East vs West World", url: "https://www.kidocode.com/blog/east-vs-west" },
+          { title: "Online Education", url: "https://www.kidocode.com/blog/distance-not-problem" },
+          { title: "Computational Thinking", url: "https://www.kidocode.com/blog/computational-thinking" },
+          { title: "Coding for Early Age", url: "https://www.kidocode.com/blog/early-age" },
+          { title: "Importance of Coding", url: "https://www.kidocode.com/blog/code-as-language" },
+          { title: "Adaptive Learning", url: "https://www.kidocode.com/blog/adaptive-learning" }
+        ];
+
+        // --- Mapping: Blog Title -> Question IDs (Refined based on content interpretation) ---
+        // !! IMPORTANT: This mapping is interpretive and may require further refinement !!
+        const BLOG_QUESTION_MAP = {
+            "Coding and Problem-Solving Skills in Kids": ["C1"], // Focus on problem-solving, resilience
+            "Is a Digital Marketing Course Useful for Kids?": ["G1", "G2"], // Future careers, practical skills
+            "Reasons to Learn Coding with AI for Kids": ["B1", "G1"], // Addresses AI relevance, future skills
+            "How AI is Shaping Data Analysis": ["B1", "C3", "G1"], // AI impact, data analysis link to math/logic, future skills
+            "The Future of Creativity": ["C2"], // Directly addresses creativity
+            "AI in Everyday Life": ["B1"], // Shows AI relevance despite code generation
+            "Launching AI-Based Businesses": ["B1", "G2", "F2"], // AI relevance, entrepreneurship, AI track
+            "Ethics and Safety in AI": ["B3"], // Directly addresses ethics/safety
+            "Interactive Digital Storybooks with AI": ["C2", "B1"], // Creativity, AI application example
+            "Generative Art ": ["C2", "B1"], // Creativity, AI application example
+            "Essential Skills in Prompt Engineering": ["B2", "G1"], // Prompting AI, future skill
+            "Understanding AI Transformer Models": ["B1"], // Technical AI understanding, relevant to AI's role
+            "5 Benefits of Learning Blockchain for Kids": ["G1"], // Future tech/career relevance
+            "Why Kids Should Learn Mobile App Dev": ["F1", "G1"], // Building apps, future skill
+            "5 Best Blockchain Books for Kids": ["G1"], // Resource for future tech
+            "Data Science for Kids in Malaysia": ["C3", "G1"], // Data science links to math/logic, future skill
+            "Why Data Science is Important for Kids": ["C3", "G1"], // Data science links to math/logic, future skill
+            "How to Teach App Development for Kids": ["F1", "A1", "A2"], // Building apps, starting age/readiness
+            "Teaching Electronics to Children": ["F1", "A1"], // Building gadgets, starting age relevance
+            "Benefits of Learning Website Design": ["F1", "C2", "G1"], // Building websites, creativity, future skill
+            "How to Teach your Kids to Learn Blockchain": ["G1"], // Resource for future tech
+            "5 Reasons Kids Should Learn 3D Modelling": ["F1", "C2"], // Building things, creativity
+            "Can Kids Learn From Roblox?": ["C2"], // Creativity/learning from games
+            "Minecraft Coding to Turns Kids to Creators": ["C2", "F1"], // Creativity, building games
+            "Top 5 Benefits of AI and Robotics for Kids": ["B1", "F1", "G1", "F2", "C1"], // AI relevance, building robots, future skills, robotics track, problem-solving
+            "How to Code Your Own Game with JavaScript": ["F1", "C2"], // Building games, creativity
+            "5 Reasons For Kids to Learn Entrepreneurship": ["G2"], // Directly entrepreneurship
+            "How To Grow Child's Entrepreneurial Spirit": ["G2"], // Directly entrepreneurship
+            "5 Easiest Coding Languages for Kids": ["A1", "A2"], // Starting age, beginner readiness
+            "Guide for Kids Robotics in 2022": ["F1", "F2"], // Building robots, robotics track
+            "Criteria When Picking Coding Classes": ["E1", "E4", "E5", "H2"], // Logistics, personalization, adapting content
+            "Top 10 Kids CS Classes": ["E3", "F2"], // Course options, tracks (implicitly costs/bundles)
+            "Smart Houses": ["F1"], // Example of hands-on project outcome
+            "Digital Circuits": ["F1"], // Part of electronics curriculum
+            "Principle of Electronics": ["F1"], // Part of electronics curriculum
+            "Robots and Drones": ["F1", "F2"], // Robotics track, building things
+            "Backend Development": ["F1", "G1"], // Building real apps, future skill
+            "Web Security": ["B3"], // Related to safety/ethics online
+            "JavaScript and jQuery": ["F1", "G1"], // Building web apps, future skill
+            "Android Development": ["F1", "G1"], // Building apps, future skill
+            "Artificial Intelligence": ["B1", "B3", "G1", "F2"], // General AI overview, ethics, future jobs, AI track
+            "iOS Development": ["F1", "G1"], // Building apps, future skill
+            "PhaserJS": ["F1", "C2"], // Building games, creativity
+            "Computer Graphics": ["C2", "F1"], // Creativity, building things
+            "Electronic Components": ["F1"], // Part of electronics curriculum
+            "PyGame": ["F1", "C2"], // Building games, creativity
+            "Cloud Services": ["G1"], // Future tech/career relevance
+            "C and C++": ["G1", "F1", "A3"], // Foundational skills, building things, value if already coding
+            "Web Hosting": ["F1", "G1"], // Tech skill for web projects
+            "HTML": ["F1", "G1"], // Foundational skill for web
+            "Mobile Programming": ["F1", "G1"], // Building apps, future skill
+            "CSS": ["F1", "G1"], // Foundational skill for web
+            "JavaScript": ["F1", "G1"], // Foundational skill for web/games
+            "User Interface Design": ["C2", "F1"], // Creativity, building apps/sites
+            "Mathematics": ["C3"], // Directly math related
+            "Mobile Hardware": ["F1"], // Relevant to building mobile apps/gadgets
+            "Information Revolution": ["G1"], // Context for future careers
+            "Scratch vs Python": ["A1", "C1"], // Starting age, problem-solving approach
+            "Special Kids": ["H1"], // Directly special needs
+            "What is Python?": ["G1", "F1", "A2"], // Foundational skill, beginner readiness
+            "Personalized Learning": ["E1", "H2"], // Personalization, adapting content
+            "MIT App Inventor": ["A1", "F1", "C2"], // Starting age, building apps, creativity
+            "Micro bit": ["A1", "F1"], // Starting age, building gadgets
+            "Knowledge Workers": ["G1"], // Future careers
+            "Knowledge Economy": ["G1", "G2"], // Future careers, entrepreneurship context
+            "Home Access": ["E4", "D2"], // Online learning logistics, balancing activities
+            "Game Addiction": ["D1"], // Screen time, well-being
+            "Freelancer Economy": ["G1", "G2"], // Future careers, entrepreneurship
+            "Estonia's Education": ["G1"], // Example of future prep/IT focus
+            "Entrepreneurship Skills": ["G2"], // Directly entrepreneurship
+            "East vs West World": ["G1"], // Broader context for careers/tech
+            "Online Education": ["E4"], // Online/physical learning option
+            "Computational Thinking": ["C1", "C3"], // Problem-solving, math/logic skills
+            "Coding for Early Age": ["A1"], // Directly starting age
+            "Importance of Coding": ["C1", "G1", "A3"], // General benefits, future jobs, value if already coding
+            "Adaptive Learning": ["E1", "H1", "H2"] // Personalization, special needs, adapting content
+        };
+
+
+        /**************************** APPLICATION LOGIC  ****************************/
+
+        // --- DOM Element References ---
+        const categorySelector = document.getElementById('category-selector');
+        const questionSelector = document.getElementById('question-selector');
+        const resultsSection = document.getElementById('results-section');
+        const resultsTitle = document.getElementById('results-title');
+        const blogsList = document.getElementById('blogs-list');
+
+        // --- State Variables ---
+        let selectedCategoryKey = null;
+        let selectedQuestionId = null;
+
+        // --- Populate Category Dropdown ---
+        function populateCategoryDropdown() {
+            Object.entries(CATEGORIES).forEach(([key, category]) => {
+                const option = document.createElement('option');
+                option.value = key; // e.g., "A", "B"
+                option.textContent = `${key}. ${category.name}`;
+                categorySelector.appendChild(option);
+            });
+        }
+
+        // --- Populate Question Dropdown ---
+        function populateQuestionDropdown(categoryKey) {
+            // Clear previous options (except the placeholder)
+            questionSelector.innerHTML = '<option value="">-- Select Question --</option>';
+            questionSelector.disabled = true; // Disable initially
+
+            if (categoryKey && categoryKey !== "ALL_CATEGORIES" && CATEGORIES[categoryKey]) {
+                 // Add "All Questions for this Category" option
+                 const allOption = document.createElement('option');
+                 allOption.value = "ALL_QUESTIONS";
+                 allOption.textContent = `-- All Questions in ${categoryKey}. ${CATEGORIES[categoryKey].name} --`;
+                 questionSelector.appendChild(allOption);
+
+                // Add specific questions for the category
+                CATEGORIES[categoryKey].questions.forEach(q => {
+                    const option = document.createElement('option');
+                    option.value = q.id; // e.g., "A1", "A2"
+                    option.textContent = q.text;
+                    questionSelector.appendChild(option);
+                });
+                questionSelector.disabled = false; // Enable dropdown
+            } else {
+                 // Handle the "Select Category" or "All Categories" case
+                 questionSelector.innerHTML = '<option value="">-- Select Question --</option>';
+                 questionSelector.disabled = true;
+            }
+        }
+
+        // --- Render Blog Results ---
+        function renderContent() {
+            blogsList.innerHTML = ''; // Clear previous results
+            resultsSection.classList.add('hidden'); // Hide results initially
+
+            let filteredBlogTitles = new Set(); // Use a Set to avoid duplicates
+
+            // --- Filtering Logic ---
+            if (selectedCategoryKey === "ALL_CATEGORIES") {
+                // Show all blogs if "All Categories" is selected
+                resultsTitle.textContent = "All Blog Articles";
+                BLOGS.forEach(blog => filteredBlogTitles.add(blog.title));
+            } else if (selectedCategoryKey && selectedQuestionId === "ALL_QUESTIONS") {
+                // Show all blogs for the selected category
+                resultsTitle.textContent = `All Articles for Category ${selectedCategoryKey}: ${CATEGORIES[selectedCategoryKey].name}`;
+                const categoryQuestionIds = CATEGORIES[selectedCategoryKey].questions.map(q => q.id);
+                // Find blog titles that map to *any* question in this category
+                Object.entries(BLOG_QUESTION_MAP).forEach(([title, questionIds]) => {
+                    if (questionIds.some(id => categoryQuestionIds.includes(id))) {
+                        filteredBlogTitles.add(title);
+                    }
+                });
+            } else if (selectedCategoryKey && selectedQuestionId) {
+                // Show blogs for the specific question selected
+                 const questionText = CATEGORIES[selectedCategoryKey]?.questions.find(q => q.id === selectedQuestionId)?.text || "Selected Question";
+                 resultsTitle.textContent = `Articles related to: "${questionText}"`;
+                // Find blog titles that map to the specific question ID
+                 Object.entries(BLOG_QUESTION_MAP).forEach(([title, questionIds]) => {
+                     if (questionIds.includes(selectedQuestionId)) {
+                         filteredBlogTitles.add(title);
+                     }
+                 });
+            }
+
+            // --- Displaying Results ---
+            const uniqueTitlesArray = Array.from(filteredBlogTitles);
+
+            if (uniqueTitlesArray.length > 0) {
+                // Get full blog objects for the filtered titles
+                // Maintain original order from BLOGS array if possible for consistency
+                const blogsToDisplay = BLOGS.filter(blog => uniqueTitlesArray.includes(blog.title));
+
+                blogsToDisplay.forEach(({ title, url }) => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.textContent = title;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    li.appendChild(a);
+                    blogsList.appendChild(li);
+                });
+                resultsSection.classList.remove('hidden'); // Show results card
+            } else if (selectedCategoryKey || selectedQuestionId) {
+                 // Only show "no results" if a selection has been made and it's not the default state
+                 if (selectedCategoryKey && selectedCategoryKey !== "" && selectedQuestionId && selectedQuestionId !== "") {
+                    resultsTitle.textContent = "No Specific Articles Found";
+                    const li = document.createElement('li');
+                    li.textContent = 'No blog posts specifically tagged for this exact question yet. Try selecting "All Questions" for the category, or browse "All Blog Articles".';
+                    blogsList.appendChild(li);
+                    resultsSection.classList.remove('hidden');
+                 }
+            }
+        }
+
+        // --- Event Listeners ---
+        categorySelector.addEventListener('change', (event) => {
+            selectedCategoryKey = event.target.value;
+            selectedQuestionId = null; // Reset question selection
+            populateQuestionDropdown(selectedCategoryKey); // Update question dropdown
+            // Automatically trigger render based on category change (Show "All Questions" results or "All Blogs")
+            if (selectedCategoryKey === "ALL_CATEGORIES") {
+                selectedQuestionId = null; // Ensure question ID is null for "All Categories"
+                renderContent();
+            } else if (selectedCategoryKey) {
+                 // Default to showing "All Questions" for the category initially
+                 questionSelector.value = "ALL_QUESTIONS"; // Set dropdown value
+                 selectedQuestionId = "ALL_QUESTIONS";    // Set state variable
+                 renderContent();
+            } else {
+                 // If "-- Select Category --" is chosen
+                 renderContent(); // This will hide the results
+            }
+        });
+
+        questionSelector.addEventListener('change', (event) => {
+            selectedQuestionId = event.target.value;
+            renderContent(); // Update results based on question selection
+        });
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategoryDropdown();
+            renderContent(); // Initial render (hides sections)
+        });
+
+    </script>
+
+</body>
+</html>
